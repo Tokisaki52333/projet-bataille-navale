@@ -1,0 +1,140 @@
+' Diagrammes UML du projet bataille navale.
+' Rendu : https://www.plantuml.com/plantuml/  (ou extension VS Code « PlantUML »).
+' Les marques de bateaux (emojis) ne sont pas dessinées ici : la police du
+' serveur de rendu ne les connaît pas, on les décrit donc en toutes lettres.
+
+' ---------------------------------------------------------------------------
+' 1. La grille, avant l'arrivée des bateaux
+' ---------------------------------------------------------------------------
+@startuml 01-grille-sans-bateaux
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+title Grille — première version (sans bateaux)
+
+class Grille {
+  - lignes : int
+  - colonnes : int
+  - grille : list[str]
+  + __init__(lignes: int, colonnes: int)
+  + tirer(ligne: int, colonne: int) : None
+  + __str__() : str
+}
+
+note right of Grille::grille
+  L * C caractères dans une seule liste.
+  La case (l, c) est à l'indice l * C + c.
+end note
+
+@enduml
+
+
+' ---------------------------------------------------------------------------
+' 2. La grille après l'ajout du nombre de colonnes, du caractère vide
+'    et des deux états possibles d'une case
+' ---------------------------------------------------------------------------
+@startuml 02-grille-complete
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+title Grille — version finale
+
+class Grille {
+  - lignes : int
+  - colonnes : int
+  - grille : list[str]
+  {static} + vide : str
+  + __init__(lignes: int, colonnes: int)
+  + indice(ligne: int, colonne: int) : int
+  + dans_grille(ligne: int, colonne: int) : bool
+  + tirer(ligne: int, colonne: int, touche: str = "x") : None
+  + ajoute(bateau: Bateau) : None
+  + __str__() : str
+}
+
+note right of Grille::vide
+  États possibles d'une case :
+    vide      case jamais tirée, affichée "."
+    "x"       tir dans l'eau
+    bombe     tir qui touche un bateau
+    marque    bateau coulé, révélé sur la grille
+  (vide = le caractère "∿" du sujet)
+end note
+
+@enduml
+
+
+' ---------------------------------------------------------------------------
+' 3. Les bateaux et leur lien avec la grille
+' ---------------------------------------------------------------------------
+@startuml 03-bateaux
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+title Bateau, ses sous-classes et la grille
+
+class Grille {
+  - lignes : int
+  - colonnes : int
+  - grille : list[str]
+  + indice(ligne: int, colonne: int) : int
+  + ajoute(bateau: Bateau) : None
+}
+
+class Bateau {
+  - ligne : int
+  - colonne : int
+  - longueur : int
+  - vertical : bool
+  {static} + marque : str
+  + __init__(ligne: int, colonne: int, longueur: int = 1, vertical: bool = False)
+  + positions() : list[tuple[int, int]]
+  + coule(grille: Grille) : bool
+  + coulé(grille: Grille) : bool
+}
+
+class PorteAvion {
+  {static} + marque : str
+  {static} + longueur_bateau : int = 4
+  {static} + message_coule : str
+  + __init__(ligne: int, colonne: int, vertical: bool = False)
+}
+
+class Croiseur {
+  {static} + marque : str
+  {static} + longueur_bateau : int = 3
+  {static} + message_coule : str
+  + __init__(ligne: int, colonne: int, vertical: bool = False)
+}
+
+class Torpilleur {
+  {static} + marque : str
+  {static} + longueur_bateau : int = 2
+  {static} + message_coule : str
+  + __init__(ligne: int, colonne: int, vertical: bool = False)
+}
+
+class SousMarin {
+  {static} + marque : str
+  {static} + longueur_bateau : int = 2
+  {static} + message_coule : str
+  + __init__(ligne: int, colonne: int, vertical: bool = False)
+}
+
+Bateau <|-- PorteAvion
+Bateau <|-- Croiseur
+Bateau <|-- Torpilleur
+Bateau <|-- SousMarin
+
+Grille ..> Bateau : utilise (positions, marque)
+Bateau ..> Grille : lit les cases (coule)
+
+note bottom of Bateau
+  Chaque sous-classe fixe sa marque (un emoji de navire), sa longueur
+  et son message de naufrage ; seul le constructeur est redéfini.
+end note
+
+@enduml
